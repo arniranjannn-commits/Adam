@@ -59,7 +59,7 @@ export function AnglesTab({ highlightId, onDataChange }: Props) {
   const [angles, setAngles] = useState<AngleItem[]>(anglesData);
   const [generating, setGenerating] = useState(false);
   const [expanded, setExpanded] = useState<string | null>(null);
-  const [view, setView] = useState<'kanban' | 'list'>('kanban');
+  const [view, setView] = useState<'kanban' | 'list'>('list');
   const [search, setSearch] = useState('');
   const [filterScore, setFilterScore] = useState('All');
 

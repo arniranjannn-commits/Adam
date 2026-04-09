@@ -76,6 +76,7 @@ function ColFilter({ options, value, onChange }: { options: string[]; value: str
 export function AdBriefTab({ onNavigate, navHistory, onBack, onConceptsGenerated }: Props) {
   const [briefs, setBriefs] = useState(adBriefData);
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [overlayBriefId, setOverlayBriefId] = useState<string | null>(null);
   const [configs, setConfigs] = useState<Record<string, GenConfig>>({});
   const [genSteps, setGenSteps] = useState<Record<string, GenStep>>({});
   const [scripts, setScripts] = useState<Record<string, GeneratedScript[]>>({});
@@ -245,10 +246,10 @@ export function AdBriefTab({ onNavigate, navHistory, onBack, onConceptsGenerated
                 return (
                   <>
                     <tr key={brief.id}
-                      onClick={() => setExpandedId(prev => prev === brief.id ? null : brief.id)}
-                      className={`cursor-pointer transition-colors ${isExpanded ? 'bg-blue-50' : 'hover:bg-gray-50'}`}>
-                      <td className="text-center">
-                        <span className={`inline-flex items-center justify-center w-5 h-5 rounded text-gray-400 transition-transform duration-200 ${isExpanded ? 'rotate-90 text-blue-500' : ''}`}>
+                      onClick={() => setOverlayBriefId(brief.id)}
+                      className={`cursor-pointer transition-colors ${overlayBriefId === brief.id ? 'bg-blue-50 border-l-2 border-l-blue-500' : isExpanded ? 'bg-blue-50/60' : 'hover:bg-gray-50'}`}>
+                      <td className="text-center" onClick={e => { e.stopPropagation(); setExpandedId(prev => prev === brief.id ? null : brief.id); }}>
+                        <span className={`inline-flex items-center justify-center w-5 h-5 rounded text-gray-400 transition-transform duration-200 hover:bg-gray-100 ${isExpanded ? 'rotate-90 text-blue-500' : ''}`}>
                           <ChevronRight size={13} />
                         </span>
                       </td>
@@ -309,6 +310,28 @@ export function AdBriefTab({ onNavigate, navHistory, onBack, onConceptsGenerated
           <span>Rows per page: 20</span>
         </div>
       </div>
+
+      {/* ── Brief overlay (right panel) ── */}
+      {overlayBriefId && (() => {
+        const ob = briefs.find(b => b.id === overlayBriefId);
+        if (!ob) return null;
+        return (
+          <>
+            <div className="fixed inset-0 bg-black/10 z-30" onClick={() => setOverlayBriefId(null)} />
+            <BriefOverlay
+              brief={ob}
+              genStep={genSteps[ob.id] ?? 'idle'}
+              config={configFor(ob.id)}
+              scripts={scripts[ob.id] ?? []}
+              onConfigChange={fn => setConfig(ob.id, fn)}
+              onGenerate={() => handleGenerate(ob)}
+              onClose={() => setOverlayBriefId(null)}
+              onNavigate={onNavigate}
+              getMsg={getMsg} getAngle={getAngle} getICP={getICP} getHook={getHook}
+            />
+          </>
+        );
+      })()}
 
       {/* ── Config modal (popup) ── */}
       {configBrief && (
@@ -452,6 +475,285 @@ function BriefDetail({ brief, genStep, scriptCount, onNavigate, getMsg, getAngle
             {isGenerating ? <><Loader2 size={13} className="animate-spin" /> Generating…</> : <><SlidersHorizontal size={13} /> {isDone ? 'Reconfigure' : 'Configure & Generate'}</>}
           </button>
         </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Brief Overlay (right slide panel) ───────────────────────────────────────
+function BriefOverlay({ brief, genStep, config, scripts, onConfigChange, onGenerate, onClose, onNavigate, getMsg, getAngle, getICP, getHook }: {
+  brief: AdBriefItem;
+  genStep: GenStep;
+  config: GenConfig;
+  scripts: GeneratedScript[];
+  onConfigChange: (fn: (c: GenConfig) => GenConfig) => void;
+  onGenerate: () => void;
+  onClose: () => void;
+  onNavigate: (tab: string, id: string) => void;
+  getMsg: (id: string) => any;
+  getAngle: (id: string) => any;
+  getICP: (id: string) => any;
+  getHook: (id: string) => any;
+}) {
+  const angle = getAngle(brief.angleId);
+  const isGenerating = genStep === 'generating';
+  const isDone = genStep === 'done';
+  const [expandedScript, setExpandedScript] = useState<string | null>(scripts[0]?.id ?? null);
+
+  useEffect(() => {
+    const h = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    document.addEventListener('keydown', h);
+    return () => document.removeEventListener('keydown', h);
+  }, [onClose]);
+
+  const Chip = ({ label, active, onClick }: { label: string; active: boolean; onClick: () => void }) => (
+    <button onClick={onClick}
+      className={`px-2 py-1 rounded-lg text-[11px] font-medium border transition-all
+        ${active ? 'bg-[#0f1c3f] border-[#0f1c3f] text-white' : 'bg-white border-gray-200 text-gray-600 hover:border-blue-300 hover:text-blue-600'}`}>
+      {label}
+    </button>
+  );
+
+  return (
+    <div className="fixed top-0 right-0 h-full w-[540px] bg-white border-l border-gray-200 shadow-2xl z-40 flex flex-col">
+      {/* Header */}
+      <div className="flex items-center gap-3 px-4 py-3 border-b border-gray-100 flex-shrink-0">
+        <div className="w-8 h-8 rounded-xl bg-[#0f1c3f] flex items-center justify-center flex-shrink-0">
+          <FileText size={14} className="text-white" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="font-semibold text-gray-900 text-[13px] truncate">{angle.title}</div>
+          <div className="text-[10.5px] text-gray-400 mt-0.5">{angle.category} · {brief.format} · {brief.platform}</div>
+        </div>
+        <div className="flex items-center gap-1.5 flex-shrink-0">
+          <span className={`badge text-[10px] font-bold px-2 py-0.5 rounded
+            ${brief.priority === 'P0' ? 'bg-red-100 text-red-700' : brief.priority === 'P1' ? 'bg-orange-100 text-orange-600' : 'bg-gray-100 text-gray-500'}`}>
+            {brief.priority}
+          </span>
+          <button onClick={onClose} className="w-6 h-6 rounded-lg hover:bg-gray-100 flex items-center justify-center ml-1">
+            <X size={13} className="text-gray-400" />
+          </button>
+        </div>
+      </div>
+
+      {/* Scrollable body */}
+      <div className="flex-1 overflow-y-auto">
+
+        {/* Brief details — 2×2 compact grid */}
+        <div className="p-4 border-b border-gray-100">
+          <div className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide mb-2">Brief Details</div>
+          <div className="grid grid-cols-2 gap-2">
+            {/* Angle */}
+            <div className="bg-gray-50 rounded-xl border border-gray-100 p-3">
+              <div className="text-[9.5px] font-semibold text-gray-400 uppercase tracking-wide mb-1.5">Angle</div>
+              <div className="font-medium text-gray-900 text-[12px] leading-snug mb-1">{angle.title}</div>
+              {angle.hook && <div className="text-[11px] text-gray-500 italic leading-relaxed line-clamp-2">"{angle.hook.slice(0, 70)}…"</div>}
+            </div>
+            {/* Situation */}
+            <div className="bg-gray-50 rounded-xl border border-gray-100 p-3">
+              <div className="text-[9.5px] font-semibold text-gray-400 uppercase tracking-wide mb-1.5">Situation</div>
+              <div className="text-[11.5px] text-gray-700 leading-relaxed mb-2">{brief.situation}</div>
+              <div className="flex flex-wrap gap-1">
+                {[brief.format, brief.platform, brief.duration].map(tag => (
+                  <span key={tag} className="text-[10px] bg-gray-200 text-gray-600 px-1.5 py-0.5 rounded">{tag}</span>
+                ))}
+              </div>
+            </div>
+            {/* ICP & Messaging */}
+            <div className="bg-gray-50 rounded-xl border border-gray-100 p-3">
+              <div className="text-[9.5px] font-semibold text-gray-400 uppercase tracking-wide mb-1.5">ICP & Messaging</div>
+              <div className="text-[9.5px] text-gray-400 font-medium mb-1">Audiences</div>
+              {brief.icpIds.map(id => {
+                const icp = getICP(id);
+                return icp ? (
+                  <button key={id} onClick={() => onNavigate('icp', icp.id)}
+                    className="text-[11px] text-blue-600 hover:underline font-medium block truncate w-full text-left">
+                    {icp.segment.split('—')[0].trim()}
+                  </button>
+                ) : null;
+              })}
+              <div className="text-[9.5px] text-gray-400 font-medium mt-2 mb-1">Messaging</div>
+              {brief.messagingIds.map(id => {
+                const msg = getMsg(id);
+                return msg ? (
+                  <button key={id} onClick={() => onNavigate('messaging', msg.id)}
+                    className="text-[11px] text-blue-600 hover:underline text-left block truncate w-full">
+                    {msg.headline.split(' ').slice(0, 5).join(' ')}…
+                  </button>
+                ) : null;
+              })}
+            </div>
+            {/* Hooks */}
+            <div className="bg-gray-50 rounded-xl border border-gray-100 p-3">
+              <div className="text-[9.5px] font-semibold text-gray-400 uppercase tracking-wide mb-1.5">Hooks</div>
+              <div className="space-y-1.5">
+                {brief.hookIds.map(id => {
+                  const h = getHook(id);
+                  return h ? (
+                    <div key={id} className="text-[11px] text-gray-600 leading-relaxed line-clamp-2">
+                      <span className="font-mono text-[9.5px] text-gray-400 mr-1">{id}</span>
+                      "{h.text.slice(0, 50)}…"
+                    </div>
+                  ) : null;
+                })}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Script Configurator */}
+        <div className="p-4 border-b border-gray-100">
+          <div className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide mb-3">Script Configuration</div>
+          <div className="space-y-3">
+            {/* Variation Mode */}
+            <div>
+              <div className="text-[11px] font-semibold text-gray-700 mb-1.5">Variation Mode</div>
+              <div className="grid grid-cols-3 gap-1.5">
+                {(['Tight', 'Moderate', 'Wide'] as const).map(v => (
+                  <button key={v} onClick={() => onConfigChange(c => ({ ...c, variationMode: v }))}
+                    className={`py-1.5 rounded-lg text-[11.5px] font-semibold border transition-all
+                      ${config.variationMode === v ? 'bg-[#0f1c3f] border-[#0f1c3f] text-white' : 'bg-gray-50 border-gray-200 text-gray-600 hover:border-gray-300'}`}>
+                    {v}
+                  </button>
+                ))}
+              </div>
+            </div>
+            {/* Scripts count */}
+            <div>
+              <div className="text-[11px] font-semibold text-gray-700 mb-1.5">Number of Scripts</div>
+              <div className="flex items-center gap-3">
+                <button onClick={() => onConfigChange(c => ({ ...c, numVariations: Math.max(1, c.numVariations - 1) }))}
+                  className="w-7 h-7 rounded-lg border border-gray-200 bg-gray-50 hover:bg-gray-100 flex items-center justify-center">
+                  <Minus size={12} className="text-gray-500" />
+                </button>
+                <span className="text-[22px] font-bold text-gray-900 w-8 text-center leading-none">{config.numVariations}</span>
+                <button onClick={() => onConfigChange(c => ({ ...c, numVariations: Math.min(9, c.numVariations + 1) }))}
+                  className="w-7 h-7 rounded-lg border border-gray-200 bg-gray-50 hover:bg-gray-100 flex items-center justify-center">
+                  <Plus size={12} className="text-gray-500" />
+                </button>
+                <div className="flex gap-1 ml-auto">
+                  {[1, 3, 5, 9].map(n => (
+                    <button key={n} onClick={() => onConfigChange(c => ({ ...c, numVariations: n }))}
+                      className={`w-6 h-6 rounded text-[10.5px] font-semibold border transition-all
+                        ${config.numVariations === n ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-500 border-gray-200 hover:border-blue-300'}`}>
+                      {n}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+            {/* Duration + Style */}
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <div className="text-[11px] font-semibold text-gray-700 mb-1.5">Duration</div>
+                <div className="flex flex-wrap gap-1">
+                  {(['Auto', '15s', '30s', '45s', '60s'] as const).map(t => (
+                    <Chip key={t} label={t} active={config.tone === t} onClick={() => onConfigChange(c => ({ ...c, tone: t }))} />
+                  ))}
+                </div>
+              </div>
+              <div>
+                <div className="text-[11px] font-semibold text-gray-700 mb-1.5">Style</div>
+                <div className="flex flex-wrap gap-1">
+                  {(['Auto', 'Comedy', 'Emotional', 'Educational'] as const).map(d => (
+                    <Chip key={d} label={d} active={config.duration === d} onClick={() => onConfigChange(c => ({ ...c, duration: d }))} />
+                  ))}
+                </div>
+              </div>
+            </div>
+            {/* Language */}
+            <div>
+              <div className="text-[11px] font-semibold text-gray-700 mb-1.5">Language</div>
+              <div className="flex flex-wrap gap-1">
+                {(['Auto', 'English', 'Hindi', 'Kannada', 'Tamil'] as const).map(l => (
+                  <Chip key={l} label={l} active={config.language === l} onClick={() => onConfigChange(c => ({ ...c, language: l }))} />
+                ))}
+              </div>
+            </div>
+            {/* Prompt */}
+            <div>
+              <div className="text-[11px] font-semibold text-gray-700 mb-1.5">Additional Direction <span className="text-gray-400 font-normal">(optional)</span></div>
+              <textarea className="field resize-none text-[11.5px] w-full" rows={2}
+                placeholder="Any extra creative direction…"
+                value={config.prompt}
+                onChange={e => onConfigChange(c => ({ ...c, prompt: e.target.value }))} />
+            </div>
+          </div>
+        </div>
+
+        {/* Generated Scripts */}
+        {(isDone || isGenerating) && (
+          <div className="p-4">
+            <div className="flex items-center justify-between mb-3">
+              <div className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide">Generated Scripts</div>
+              {isDone && <span className="text-[11px] text-green-600 font-medium flex items-center gap-1"><CheckCircle2 size={11} /> {scripts.length} ready</span>}
+            </div>
+            {isGenerating ? (
+              <div className="flex items-center justify-center py-8 text-[12px] text-blue-500">
+                <Loader2 size={16} className="animate-spin mr-2" /> Generating scripts…
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {scripts.map(script => {
+                  const isOpen = expandedScript === script.id;
+                  return (
+                    <div key={script.id} className="bg-gray-50 rounded-xl border border-gray-200 overflow-hidden">
+                      <button onClick={() => setExpandedScript(isOpen ? null : script.id)}
+                        className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-gray-100 transition-colors text-left">
+                        <div className="w-7 h-7 rounded-lg bg-gray-200 flex items-center justify-center text-[11px] font-bold text-gray-600 flex-shrink-0">
+                          V{script.version}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="text-[12px] font-semibold text-gray-800 truncate">{script.headline}</div>
+                          <div className="flex items-center gap-1 mt-0.5">
+                            <span className="text-[10px] bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded font-medium">{script.duration}</span>
+                            <span className="text-[10px] bg-purple-50 text-purple-600 px-1.5 py-0.5 rounded font-medium">{script.tone}</span>
+                          </div>
+                        </div>
+                        {isOpen ? <ChevronUp size={12} className="text-gray-400 flex-shrink-0" /> : <ChevronDown size={12} className="text-gray-400 flex-shrink-0" />}
+                      </button>
+                      {isOpen && (
+                        <div className="border-t border-gray-200 px-3 pb-3 pt-2 space-y-2 bg-white">
+                          <div className="grid grid-cols-2 gap-2">
+                            {[{ label: 'Hook', value: script.hook }, { label: 'CTA', value: script.cta }].map(({ label, value }) => (
+                              <div key={label} className="bg-gray-50 rounded-lg p-2">
+                                <div className="text-[9.5px] font-semibold text-gray-400 uppercase tracking-wide mb-1">{label}</div>
+                                <div className="text-[11px] text-gray-800 leading-snug">{value}</div>
+                              </div>
+                            ))}
+                          </div>
+                          <div className="bg-gray-50 rounded-lg p-2">
+                            <div className="text-[9.5px] font-semibold text-gray-400 uppercase tracking-wide mb-1.5">Scene Breakdown</div>
+                            <div className="space-y-1.5">
+                              {script.scenes.map(s => (
+                                <div key={s.num} className="flex gap-2">
+                                  <span className="font-mono text-[10px] text-gray-400 flex-shrink-0 w-10 mt-0.5">{s.time}</span>
+                                  <span className="text-[11px] text-gray-600 leading-snug">{s.description}</span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Sticky footer — Generate button */}
+      <div className="flex-shrink-0 px-4 py-3 border-t border-gray-100 bg-gray-50">
+        <button onClick={onGenerate} disabled={isGenerating}
+          className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-[13px] font-semibold text-white transition-all disabled:opacity-60"
+          style={{ background: '#0f1c3f' }}>
+          {isGenerating
+            ? <><Loader2 size={14} className="animate-spin" /> Generating…</>
+            : <><Play size={13} /> {isDone ? 'Regenerate' : 'Generate'} {config.numVariations} Script{config.numVariations > 1 ? 's' : ''}</>
+          }
+        </button>
       </div>
     </div>
   );
