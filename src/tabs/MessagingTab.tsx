@@ -246,12 +246,13 @@ export function MessagingTab({ highlightId }: Props) {
             </div>
           </div>
 
-          {/* Fields */}
-          <div className="flex-1 overflow-y-auto p-5">
-            <div className="space-y-4">
+          {/* Fields — 2-col layout filling full height */}
+          <div className="flex-1 overflow-hidden flex gap-4 p-4">
 
+            {/* Left col: Headline + Value Prop (grows to fill) */}
+            <div className="flex-1 flex flex-col gap-4 min-w-0">
               {/* Headline card */}
-              <div className="bg-white rounded-xl border border-gray-200 p-5">
+              <div className="bg-white rounded-xl border border-gray-200 p-5 flex-shrink-0">
                 <div className="text-[10.5px] font-semibold text-gray-400 uppercase tracking-wide mb-3">
                   Headline &amp; Subheadline
                 </div>
@@ -280,70 +281,79 @@ export function MessagingTab({ highlightId }: Props) {
                 )}
               </div>
 
-              {/* Value proposition */}
-              <div className="bg-white rounded-xl border border-gray-200 p-5">
+              {/* Value proposition — flex-1 fills remaining height */}
+              <div className="bg-white rounded-xl border border-gray-200 p-5 flex-1 flex flex-col min-h-0">
                 <div className="text-[10.5px] font-semibold text-gray-400 uppercase tracking-wide mb-3">
                   Value Proposition
                 </div>
                 {editMode ? (
                   <textarea
-                    className="field resize-none"
-                    rows={4}
+                    className="field resize-none flex-1"
                     value={draft!.valueProposition}
                     onChange={e => setDraft(d => d ? { ...d, valueProposition: e.target.value } : d)}
                     placeholder="Core benefit or promise to the audience…"
                   />
                 ) : (
-                  <div className="text-[13.5px] text-gray-700 leading-relaxed">
+                  <div className="text-[13.5px] text-gray-700 leading-relaxed flex-1">
                     {current.valueProposition || <span className="text-gray-300">Not defined</span>}
                   </div>
                 )}
               </div>
+            </div>
 
-              {/* Tone + Channel + CTA */}
-              <div className="grid grid-cols-3 gap-3 w-full">
-                {[
-                  { label: 'Tone', key: 'tone' as const, options: TONES, display: (v: string) => <span className="badge badge-blue">{v || '—'}</span> },
-                  { label: 'Channel', key: 'channel' as const, options: CHANNELS, display: (v: string) => <span className="text-[13px] font-medium text-gray-800">{v || '—'}</span> },
-                  { label: 'CTA', key: 'cta' as const, options: null, display: (v: string) => <span className="badge badge-gray">{v || '—'}</span> },
-                ].map(({ label, key, options, display }) => (
-                  <div key={key} className="bg-white rounded-xl border border-gray-200 p-4">
-                    <div className="text-[10.5px] font-semibold text-gray-400 uppercase tracking-wide mb-2">{label}</div>
-                    {editMode ? (
-                      options ? (
-                        <select
-                          className="field text-[12px]"
-                          value={(draft as any)[key]}
-                          onChange={e => setDraft(d => d ? { ...d, [key]: e.target.value } : d)}
-                        >
-                          <option value="">Select…</option>
-                          {options.map(o => <option key={o}>{o}</option>)}
-                        </select>
-                      ) : (
-                        <input
-                          className="field text-[12px]"
-                          value={(draft as any)[key]}
-                          onChange={e => setDraft(d => d ? { ...d, [key]: e.target.value } : d)}
-                          placeholder={`${label}…`}
-                        />
-                      )
-                    ) : (
-                      display((current as any)[key])
-                    )}
-                  </div>
-                ))}
+            {/* Right col: Tone + Channel + CTA + Usage */}
+            <div className="w-64 flex flex-col gap-4 flex-shrink-0">
+              {/* Tone */}
+              <div className="bg-white rounded-xl border border-gray-200 p-4">
+                <div className="text-[10.5px] font-semibold text-gray-400 uppercase tracking-wide mb-2">Tone</div>
+                {editMode ? (
+                  <select className="field text-[12px]" value={draft!.tone}
+                    onChange={e => setDraft(d => d ? { ...d, tone: e.target.value } : d)}>
+                    <option value="">Select…</option>
+                    {TONES.map(o => <option key={o}>{o}</option>)}
+                  </select>
+                ) : (
+                  <span className="badge badge-blue">{current.tone || '—'}</span>
+                )}
               </div>
 
-              {/* Usage info */}
+              {/* Channel */}
+              <div className="bg-white rounded-xl border border-gray-200 p-4">
+                <div className="text-[10.5px] font-semibold text-gray-400 uppercase tracking-wide mb-2">Channel</div>
+                {editMode ? (
+                  <select className="field text-[12px]" value={draft!.channel}
+                    onChange={e => setDraft(d => d ? { ...d, channel: e.target.value } : d)}>
+                    <option value="">Select…</option>
+                    {CHANNELS.map(o => <option key={o}>{o}</option>)}
+                  </select>
+                ) : (
+                  <span className="text-[13px] font-medium text-gray-800">{current.channel || '—'}</span>
+                )}
+              </div>
+
+              {/* CTA */}
+              <div className="bg-white rounded-xl border border-gray-200 p-4">
+                <div className="text-[10.5px] font-semibold text-gray-400 uppercase tracking-wide mb-2">CTA</div>
+                {editMode ? (
+                  <input className="field text-[12px]" value={draft!.cta}
+                    onChange={e => setDraft(d => d ? { ...d, cta: e.target.value } : d)}
+                    placeholder="CTA text…" />
+                ) : (
+                  <span className="badge badge-gray">{current.cta || '—'}</span>
+                )}
+              </div>
+
+              {/* Usage info — flex-1 fills remaining */}
               {!editMode && (
-                <div className="bg-blue-50 rounded-xl border border-blue-100 p-4">
+                <div className="bg-blue-50 rounded-xl border border-blue-100 p-4 flex-1">
                   <div className="text-[10.5px] font-semibold text-blue-500 uppercase tracking-wide mb-2">Usage in Briefs</div>
-                  <p className="text-[12.5px] text-blue-700">
+                  <p className="text-[12.5px] text-blue-700 leading-relaxed">
                     This messaging pillar is referenced across multiple Ad Briefs. Changes here propagate to all linked briefs.
                   </p>
                 </div>
               )}
             </div>
+
           </div>
         </div>
       ) : (
