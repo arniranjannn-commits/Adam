@@ -247,8 +247,8 @@ export function MessagingTab({ highlightId }: Props) {
           </div>
 
           {/* Fields */}
-          <div className="flex-1 overflow-y-auto p-6">
-            <div className="max-w-2xl space-y-4">
+          <div className="flex-1 overflow-y-auto p-5">
+            <div className="space-y-4">
 
               {/* Headline card */}
               <div className="bg-white rounded-xl border border-gray-200 p-5">
@@ -301,7 +301,7 @@ export function MessagingTab({ highlightId }: Props) {
               </div>
 
               {/* Tone + Channel + CTA */}
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-3 gap-3 w-full">
                 {[
                   { label: 'Tone', key: 'tone' as const, options: TONES, display: (v: string) => <span className="badge badge-blue">{v || '—'}</span> },
                   { label: 'Channel', key: 'channel' as const, options: CHANNELS, display: (v: string) => <span className="text-[13px] font-medium text-gray-800">{v || '—'}</span> },
