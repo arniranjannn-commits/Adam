@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { adBriefData, messagingData, anglesData, icpData, hooksData, adConceptsData } from '../data/mockData';
 import type { AdBriefItem, AdConceptItem, GeneratedScript } from '../data/mockData';
 import { Tooltip } from '../components/Tooltip';
@@ -244,8 +244,8 @@ export function AdBriefTab({ onNavigate, navHistory, onBack, onConceptsGenerated
                 const genStep = genSteps[brief.id] ?? 'idle';
 
                 return (
-                  <>
-                    <tr key={brief.id}
+                  <React.Fragment key={brief.id}>
+                    <tr
                       onClick={() => setOverlayBriefId(brief.id)}
                       className={`cursor-pointer transition-colors ${overlayBriefId === brief.id ? 'bg-blue-50 border-l-2 border-l-blue-500' : isExpanded ? 'bg-blue-50/60' : 'hover:bg-gray-50'}`}>
                       <td className="text-center" onClick={e => { e.stopPropagation(); setExpandedId(prev => prev === brief.id ? null : brief.id); }}>
@@ -299,7 +299,7 @@ export function AdBriefTab({ onNavigate, navHistory, onBack, onConceptsGenerated
                         </td>
                       </tr>
                     )}
-                  </>
+                  </React.Fragment>
                 );
               })}
             </tbody>
