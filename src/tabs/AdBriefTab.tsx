@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { adBriefData, messagingData, anglesData, icpData, hooksData, adConceptsData } from '../data/mockData';
 import type { AdBriefItem, AdConceptItem, GeneratedScript } from '../data/mockData';
-import { Tooltip, TagTooltip } from '../components/Tooltip';
+import { Tooltip } from '../components/Tooltip';
 import {
   ChevronLeft, ChevronRight, Loader2, CheckCircle2,
   ArrowUpDown, Eye, Plus, Minus, Wand2, FileText,
@@ -188,7 +188,6 @@ export function AdBriefTab({ onNavigate, navHistory, onBack, onConceptsGenerated
             <tbody>
               {briefs.map((brief, i) => {
                 const angle = getAngle(brief.angleId);
-                const icp = getICP(brief.icpId);
                 const isExpanded = expandedId === brief.id;
                 const hasConceptsNow = generatedSet.has(brief.id) || brief.conceptsGenerated;
                 const conceptNum = hasConceptsNow ? (brief.conceptCount || 1) : 0;
