@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { icpData } from '../data/mockData';
 import type { ICPItem } from '../data/mockData';
 import { Tooltip } from '../components/Tooltip';
-import { Users, Target, Heart, Zap, Radio, Plus, Edit3, Check, Loader2, Copy, Trash2 } from 'lucide-react';
+import { Users, Target, Heart, Zap, Radio, Plus, Edit3, Check, Loader2, Copy, Trash2, Search } from 'lucide-react';
 
 interface Props {
   highlightId?: string | null;
@@ -31,6 +31,7 @@ export function ICPTab({ highlightId }: Props) {
   const [editMode, setEditMode] = useState(false);
   const [draft, setDraft] = useState<ICPItem | null>(null);
   const [saving, setSaving] = useState(false);
+  const [search, setSearch] = useState('');
 
   const selected = items.find(i => i.id === selectedId) ?? null;
   const current = editMode && draft ? draft : selected;
@@ -103,15 +104,31 @@ export function ICPTab({ highlightId }: Props) {
     <div className="h-full flex">
       {/* ── Left: ICP cards list ── */}
       <div className="w-72 border-r border-gray-200 bg-white flex flex-col flex-shrink-0">
-        <div className="px-4 pt-4 pb-3 border-b border-gray-100 flex items-center justify-between">
-          <span className="font-semibold text-gray-900 text-[13.5px]">ICPs</span>
-          <button onClick={handleAdd} className="btn btn-primary btn-xs flex items-center gap-1">
-            <Plus size={11} /> New ICP
-          </button>
+        <div className="px-4 pt-4 pb-3 border-b border-gray-100">
+          <div className="flex items-center justify-between mb-3">
+            <span className="font-semibold text-gray-900 text-[13.5px]">ICPs</span>
+            <button onClick={handleAdd} className="btn btn-primary btn-xs flex items-center gap-1">
+              <Plus size={11} /> New ICP
+            </button>
+          </div>
+          <div className="relative">
+            <Search size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+            <input
+              type="text"
+              placeholder="Search ICPs…"
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              className="border border-gray-200 rounded-lg pl-8 pr-3 py-1.5 text-[12px] text-gray-700 placeholder-gray-400 focus:outline-none focus:border-blue-400 w-full"
+            />
+          </div>
         </div>
 
         <div className="flex-1 overflow-y-auto p-3 space-y-2">
-          {items.map(icp => {
+          {items.filter(icp => {
+            if (!search.trim()) return true;
+            const q = search.toLowerCase();
+            return icp.segment.toLowerCase().includes(q) || icp.demographics.toLowerCase().includes(q);
+          }).map(icp => {
             const c = color(icp.id);
             const isSelected = selectedId === icp.id;
             return (

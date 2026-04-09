@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { messagingData } from '../data/mockData';
 import type { MessagingItem } from '../data/mockData';
-import { Plus, Check, Archive, Copy, Edit3, TrendingUp, Loader2 } from 'lucide-react';
+import { Plus, Check, Archive, Copy, Edit3, TrendingUp, Loader2, Search } from 'lucide-react';
 
 const CHANNELS = ['Paid Social', 'Search', 'LinkedIn', 'Display', 'YouTube', 'Email'];
 const TONES = [
@@ -28,13 +28,23 @@ export function MessagingTab({ highlightId }: Props) {
     highlightId ?? messagingData[0]?.id ?? null
   );
   const [filter, setFilter] = useState<'all' | 'active' | 'draft'>('all');
+  const [search, setSearch] = useState('');
+  const [filterChannel, setFilterChannel] = useState('All');
+  const [filterTone, setFilterTone] = useState('All');
   const [editMode, setEditMode] = useState(false);
   const [draft, setDraft] = useState<MessagingItem | null>(null);
   const [saving, setSaving] = useState(false);
 
-  const filtered = items.filter(m =>
-    filter === 'all' ? true : m.status === filter
-  );
+  const filtered = items.filter(m => {
+    if (filter !== 'all' && m.status !== filter) return false;
+    if (filterChannel !== 'All' && m.channel !== filterChannel) return false;
+    if (filterTone !== 'All' && m.tone !== filterTone) return false;
+    if (search.trim()) {
+      const q = search.toLowerCase();
+      if (!m.headline.toLowerCase().includes(q) && !m.channel.toLowerCase().includes(q)) return false;
+    }
+    return true;
+  });
   const selected = items.find(m => m.id === selectedId) ?? null;
   const current = editMode && draft ? draft : selected;
 
@@ -129,7 +139,7 @@ export function MessagingTab({ highlightId }: Props) {
             </button>
           </div>
           {/* Filter tabs */}
-          <div className="flex gap-0.5 bg-gray-100 rounded-lg p-0.5">
+          <div className="flex gap-0.5 bg-gray-100 rounded-lg p-0.5 mb-2">
             {(['all', 'active', 'draft'] as const).map(f => (
               <button
                 key={f}
@@ -140,6 +150,36 @@ export function MessagingTab({ highlightId }: Props) {
                 {f}
               </button>
             ))}
+          </div>
+          {/* Search input */}
+          <div className="relative mb-2">
+            <Search size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+            <input
+              type="text"
+              placeholder="Search messages…"
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              className="border border-gray-200 rounded-lg pl-8 pr-3 py-1.5 text-[12px] text-gray-700 placeholder-gray-400 focus:outline-none focus:border-blue-400 w-full"
+            />
+          </div>
+          {/* Channel & Tone filters */}
+          <div className="flex gap-1.5">
+            <select
+              value={filterChannel}
+              onChange={e => setFilterChannel(e.target.value)}
+              className="flex-1 border border-gray-200 rounded-lg px-2.5 py-1.5 text-[12px] text-gray-700 bg-white focus:outline-none focus:border-blue-400 cursor-pointer"
+            >
+              <option value="All">All Channels</option>
+              {CHANNELS.map(c => <option key={c} value={c}>{c}</option>)}
+            </select>
+            <select
+              value={filterTone}
+              onChange={e => setFilterTone(e.target.value)}
+              className="flex-1 border border-gray-200 rounded-lg px-2.5 py-1.5 text-[12px] text-gray-700 bg-white focus:outline-none focus:border-blue-400 cursor-pointer"
+            >
+              <option value="All">All Tones</option>
+              {TONES.map(t => <option key={t} value={t}>{t}</option>)}
+            </select>
           </div>
         </div>
 

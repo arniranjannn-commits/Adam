@@ -5,7 +5,7 @@ import { Tooltip } from '../components/Tooltip';
 import {
   LayoutGrid, List, Archive, Shuffle, Send,
   Calendar, Layers, Loader2, MessageSquare, User, Bot,
-  CheckCircle2, Clock, ChevronRight, X, Monitor, Sparkles,
+  CheckCircle2, Clock, ChevronRight, X, Monitor, Sparkles, Search,
 } from 'lucide-react';
 
 interface ChatMessage {
@@ -34,6 +34,9 @@ export function AdConceptsTab({ highlightId, extraConcepts = [] }: Props) {
   const [chatLoading, setChatLoading] = useState(false);
   const [variationMode, setVariationMode] = useState(false);
   const [filterStatus, setFilterStatus] = useState<'all' | AdConceptItem['status']>('all');
+  const [search, setSearch] = useState('');
+  const [filterPlatform, setFilterPlatform] = useState('All');
+  const [filterFormat, setFilterFormat] = useState('All');
 
   useEffect(() => {
     const allIds = new Set(concepts.map(c => c.id));
@@ -82,9 +85,16 @@ export function AdConceptsTab({ highlightId, extraConcepts = [] }: Props) {
     }, 1600);
   };
 
-  const visible = concepts.filter(c =>
-    filterStatus === 'all' ? c.status !== 'archived' : c.status === filterStatus
-  );
+  const visible = concepts.filter(c => {
+    if (filterStatus === 'all' ? c.status === 'archived' : c.status !== filterStatus) return false;
+    if (filterPlatform !== 'All' && c.platform !== filterPlatform) return false;
+    if (filterFormat !== 'All' && c.format !== filterFormat) return false;
+    if (search.trim()) {
+      const q = search.toLowerCase();
+      if (!c.title.toLowerCase().includes(q) && !c.hook.toLowerCase().includes(q)) return false;
+    }
+    return true;
+  });
 
   return (
     <div className="h-full flex flex-col">
@@ -93,8 +103,39 @@ export function AdConceptsTab({ highlightId, extraConcepts = [] }: Props) {
         <div className="flex items-center gap-3">
           <span className="font-semibold text-gray-900 text-[13.5px]">Ad Concepts</span>
           <Tooltip content="Each concept includes hook, body copy, CTA, visual direction, and script. Generate variations via AI chat." large />
+          {/* Search input */}
+          <div className="relative">
+            <Search size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+            <input
+              type="text"
+              placeholder="Search concepts…"
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              className="border border-gray-200 rounded-lg pl-8 pr-3 py-1.5 text-[12px] text-gray-700 placeholder-gray-400 focus:outline-none focus:border-blue-400 w-40"
+            />
+          </div>
+          {/* Platform filter */}
+          <select
+            value={filterPlatform}
+            onChange={e => setFilterPlatform(e.target.value)}
+            className="border border-gray-200 rounded-lg px-2.5 py-1.5 text-[12px] text-gray-700 bg-white focus:outline-none focus:border-blue-400 cursor-pointer"
+          >
+            {['All', 'Meta', 'YouTube', 'TikTok', 'LinkedIn'].map(p => (
+              <option key={p} value={p}>{p === 'All' ? 'All Platforms' : p}</option>
+            ))}
+          </select>
+          {/* Format filter */}
+          <select
+            value={filterFormat}
+            onChange={e => setFilterFormat(e.target.value)}
+            className="border border-gray-200 rounded-lg px-2.5 py-1.5 text-[12px] text-gray-700 bg-white focus:outline-none focus:border-blue-400 cursor-pointer"
+          >
+            {['All', 'Video', 'Carousel', 'Static'].map(f => (
+              <option key={f} value={f}>{f === 'All' ? 'All Formats' : f}</option>
+            ))}
+          </select>
           {/* Status filter pills */}
-          <div className="flex items-center gap-1 ml-2">
+          <div className="flex items-center gap-1">
             {(['all', 'approved', 'draft'] as const).map(f => (
               <button
                 key={f}

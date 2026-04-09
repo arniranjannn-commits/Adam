@@ -6,7 +6,7 @@ import {
   ChevronLeft, ChevronRight, Loader2, CheckCircle2,
   ArrowUpDown, Eye, Plus, Minus, FileText,
   ChevronDown, ChevronUp, X, Filter,
-  SlidersHorizontal, CheckCheck, Play,
+  SlidersHorizontal, CheckCheck, Play, Search,
 } from 'lucide-react';
 
 interface Props {
@@ -90,6 +90,7 @@ export function AdBriefTab({ onNavigate, navHistory, onBack, onConceptsGenerated
   const [filterPriority, setFilterPriority] = useState('All');
   const [filterStrength, setFilterStrength] = useState('All');
   const [filterConcept, setFilterConcept] = useState('All');
+  const [search, setSearch] = useState('');
 
   const getMsg   = (id: string) => messagingData.find(m => m.id === id)!;
   const getAngle = (id: string) => anglesData.find(a => a.id === id)!;
@@ -163,6 +164,11 @@ export function AdBriefTab({ onNavigate, navHistory, onBack, onConceptsGenerated
     const hasConcept = generatedSet.has(b.id) || b.conceptsGenerated;
     if (filterConcept === 'Generated' && !hasConcept) return false;
     if (filterConcept === 'Pending'   &&  hasConcept) return false;
+    if (search.trim()) {
+      const q = search.toLowerCase();
+      const angle = getAngle(b.angleId);
+      if (!angle.title.toLowerCase().includes(q) && !b.situation.toLowerCase().includes(q)) return false;
+    }
     return true;
   });
 
@@ -187,6 +193,16 @@ export function AdBriefTab({ onNavigate, navHistory, onBack, onConceptsGenerated
                 {activeFilters} filter{activeFilters > 1 ? 's' : ''}
               </span>
             )}
+            <div className="relative">
+              <Search size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+              <input
+                type="text"
+                placeholder="Search briefs…"
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                className="border border-gray-200 rounded-lg pl-8 pr-3 py-1.5 text-[12px] text-gray-700 placeholder-gray-400 focus:outline-none focus:border-blue-400 w-40"
+              />
+            </div>
           </div>
           <div className="flex items-center gap-2">
             <button className="btn btn-secondary btn-sm text-[12px]">Strength ↓</button>

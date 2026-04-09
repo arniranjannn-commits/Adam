@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { anglesData } from '../data/mockData';
 import type { AngleItem } from '../data/mockData';
-import { Check, X, Sparkles, Loader2, TrendingUp, ChevronUp, Plus, LayoutGrid, List } from 'lucide-react';
+import { Check, X, Sparkles, Loader2, TrendingUp, ChevronUp, Plus, LayoutGrid, List, Search } from 'lucide-react';
 
 interface Props {
   highlightId?: string | null;
@@ -60,6 +60,8 @@ export function AnglesTab({ highlightId, onDataChange }: Props) {
   const [generating, setGenerating] = useState(false);
   const [expanded, setExpanded] = useState<string | null>(null);
   const [view, setView] = useState<'kanban' | 'list'>('kanban');
+  const [search, setSearch] = useState('');
+  const [filterScore, setFilterScore] = useState('All');
 
   const updateStatus = (id: string, status: AngleItem['status']) => {
     const next = angles.map(a => (a.id === id ? { ...a, status } : a));
@@ -88,6 +90,17 @@ export function AnglesTab({ highlightId, onDataChange }: Props) {
     }, 2000);
   };
 
+  const filteredAngles = angles.filter(a => {
+    if (filterScore === 'High' && a.score < 85) return false;
+    if (filterScore === 'Medium' && (a.score < 70 || a.score >= 85)) return false;
+    if (filterScore === 'Low' && a.score >= 70) return false;
+    if (search.trim()) {
+      const q = search.toLowerCase();
+      if (!a.title.toLowerCase().includes(q) && !a.hook.toLowerCase().includes(q)) return false;
+    }
+    return true;
+  });
+
   return (
     <div className="h-full flex flex-col">
       {/* ── Toolbar ── */}
@@ -105,6 +118,28 @@ export function AnglesTab({ highlightId, onDataChange }: Props) {
               {angles.filter(a => a.status === 'rejected').length} rejected
             </span>
           </div>
+          {/* Search input */}
+          <div className="relative">
+            <Search size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+            <input
+              type="text"
+              placeholder="Search angles…"
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              className="border border-gray-200 rounded-lg pl-8 pr-3 py-1.5 text-[12px] text-gray-700 placeholder-gray-400 focus:outline-none focus:border-blue-400 w-40"
+            />
+          </div>
+          {/* Score filter */}
+          <select
+            value={filterScore}
+            onChange={e => setFilterScore(e.target.value)}
+            className="border border-gray-200 rounded-lg px-2.5 py-1.5 text-[12px] text-gray-700 bg-white focus:outline-none focus:border-blue-400 cursor-pointer"
+          >
+            <option value="All">All Scores</option>
+            <option value="High">High (≥85)</option>
+            <option value="Medium">Medium (70–84)</option>
+            <option value="Low">Low (&lt;70)</option>
+          </select>
         </div>
         <div className="flex items-center gap-2">
           {/* View toggle */}
@@ -145,7 +180,7 @@ export function AnglesTab({ highlightId, onDataChange }: Props) {
       {/* ── Views ── */}
       {view === 'kanban' ? (
         <KanbanView
-          angles={angles}
+          angles={filteredAngles}
           generating={generating}
           expanded={expanded}
           highlightId={highlightId}
@@ -154,7 +189,7 @@ export function AnglesTab({ highlightId, onDataChange }: Props) {
         />
       ) : (
         <ListView
-          angles={angles}
+          angles={filteredAngles}
           expanded={expanded}
           highlightId={highlightId}
           setExpanded={setExpanded}
