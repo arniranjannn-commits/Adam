@@ -4,8 +4,8 @@ import type { AdBriefItem, AdConceptItem, GeneratedScript } from '../data/mockDa
 import { Tooltip } from '../components/Tooltip';
 import {
   ChevronLeft, ChevronRight, Loader2, CheckCircle2,
-  ArrowUpDown, Eye, Plus, Minus, Wand2, FileText,
-  ChevronDown, ChevronUp, Sparkles, X, Filter,
+  ArrowUpDown, Eye, Plus, Minus, FileText,
+  ChevronDown, ChevronUp, X, Filter,
   SlidersHorizontal, CheckCheck, Play,
 } from 'lucide-react';
 

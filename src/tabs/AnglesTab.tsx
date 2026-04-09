@@ -268,7 +268,7 @@ function ListView({
           </tr>
         </thead>
         <tbody>
-          {angles.map((angle, i) => (
+          {angles.map((angle) => (
             <>
               <tr
                 key={angle.id}
