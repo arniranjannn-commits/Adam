@@ -72,36 +72,6 @@ function ColFilter({ options, value, onChange }: { options: string[]; value: str
   );
 }
 
-// ── Toast notification ────────────────────────────────────────────────────────
-function ToastBar({ toasts, onView, onDismiss }: {
-  toasts: Toast[];
-  onView: (briefId: string) => void;
-  onDismiss: (id: string) => void;
-}) {
-  return (
-    <div className="fixed bottom-5 right-5 z-50 flex flex-col gap-2 pointer-events-none">
-      {toasts.map(t => (
-        <div key={t.id}
-          className="pointer-events-auto flex items-center gap-3 bg-gray-900 text-white pl-4 pr-2 py-3 rounded-2xl shadow-2xl min-w-[300px] animate-[slideUp_0.25s_ease]">
-          <CheckCheck size={16} className="text-green-400 flex-shrink-0" />
-          <div className="flex-1 min-w-0">
-            <div className="text-[12.5px] font-semibold truncate">{t.count} script{t.count > 1 ? 's' : ''} generated</div>
-            <div className="text-[11px] text-gray-400 truncate">{t.angleTitle}</div>
-          </div>
-          <button onClick={() => { onView(t.briefId); onDismiss(t.id); }}
-            className="text-[11.5px] font-semibold text-blue-400 hover:text-blue-300 px-2 py-1 rounded-lg hover:bg-white/10 transition-colors flex-shrink-0">
-            View
-          </button>
-          <button onClick={() => onDismiss(t.id)}
-            className="w-6 h-6 rounded-lg hover:bg-white/10 flex items-center justify-center transition-colors flex-shrink-0">
-            <X size={12} className="text-gray-400" />
-          </button>
-        </div>
-      ))}
-    </div>
-  );
-}
-
 // ── Main component ────────────────────────────────────────────────────────────
 export function AdBriefTab({ onNavigate, navHistory, onBack, onConceptsGenerated }: Props) {
   const [briefs, setBriefs] = useState(adBriefData);
