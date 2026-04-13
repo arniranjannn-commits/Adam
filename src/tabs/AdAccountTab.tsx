@@ -612,12 +612,6 @@ export function AdAccountTab() {
 
           <div className="flex-1" />
 
-          <label className="flex items-center gap-1.5 cursor-pointer select-none flex-shrink-0">
-            <input type="checkbox" checked={activeAdsOnly} onChange={e => setActiveAdsOnly(e.target.checked)}
-              className="w-3.5 h-3.5 rounded border-gray-300 accent-blue-600 cursor-pointer" />
-            <span className="text-[12px] text-gray-600 font-medium">Active Ads Only</span>
-          </label>
-
           <label className="flex items-center gap-2 cursor-pointer select-none flex-shrink-0">
             <div onClick={() => setShowCharts(c => !c)}
               className={`relative w-8 h-4 rounded-full transition-colors cursor-pointer ${showCharts ? 'bg-blue-600' : 'bg-gray-200'}`}>
