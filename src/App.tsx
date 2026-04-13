@@ -6,13 +6,14 @@ import { AnglesTab } from './tabs/AnglesTab';
 import { ICPTab } from './tabs/ICPTab';
 import { AdBriefTab } from './tabs/AdBriefTab';
 import { AdConceptsTab } from './tabs/AdConceptsTab';
+import { AdAccountTab } from './tabs/AdAccountTab';
 import type { AdConceptItem } from './data/mockData';
 import {
   messagingData, anglesData, icpData, adBriefData, adConceptsData
 } from './data/mockData';
 import { BookOpen, ChevronDown, Search, MoreHorizontal, Filter } from 'lucide-react';
 
-type TabId = 'brief' | 'concepts' | 'messaging' | 'icp' | 'angles';
+type TabId = 'brief' | 'concepts' | 'messaging' | 'icp' | 'angles' | 'account';
 interface NavEntry { tab: TabId; id: string }
 
 export default function App() {
@@ -45,6 +46,7 @@ export default function App() {
     { id: 'messaging', label: 'Messaging',   count: messagingData.length,   tooltip: 'Core messaging pillars — headlines, value propositions, and CTAs anchoring ad creative.' },
     { id: 'icp',       label: 'ICPs',        count: icpData.length,         tooltip: 'Ideal Customer Profiles — audience segments shaping how messaging and angles are tailored.' },
     { id: 'angles',    label: 'Angles',      count: anglesData.length,      tooltip: 'Creative angles defining the emotional strategy. Approve or reject to control what enters briefs.' },
+    { id: 'account',   label: 'Ad Account',  count: 12,                     tooltip: 'Analyse Meta ad account performance — headlines, CTAs, landing pages, and creative metrics.' },
   ];
 
   return (
@@ -118,6 +120,7 @@ export default function App() {
           {activeTab === 'messaging' && <MessagingTab highlightId={highlightId} />}
           {activeTab === 'icp'       && <ICPTab highlightId={highlightId} />}
           {activeTab === 'angles'    && <AnglesTab highlightId={highlightId} />}
+          {activeTab === 'account'   && <AdAccountTab />}
         </main>
       </div>
     </div>
