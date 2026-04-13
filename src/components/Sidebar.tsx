@@ -1,16 +1,13 @@
 import { Home, Layers, BarChart2, MapPin, Film, Target, Bell, User } from 'lucide-react';
 import { Tooltip } from './Tooltip';
+import type { AppView } from '../App';
 
-const navItems = [
-  { icon: Home, label: 'Home' },
-  { icon: Layers, label: 'Brands' },
-  { icon: BarChart2, label: 'Ad Account' },
-  { icon: MapPin, label: 'Track' },
-  { icon: Film, label: 'Studio' },
-  { icon: Target, label: 'Angle', active: true },
-];
+interface Props {
+  activeView: AppView;
+  onNavigate: (view: AppView) => void;
+}
 
-export function Sidebar() {
+export function Sidebar({ activeView, onNavigate }: Props) {
   return (
     <aside className="w-14 bg-[#141b2d] flex flex-col items-center py-3 flex-shrink-0 border-r border-[#1e2a3b]">
       {/* Logo / collapse toggle */}
@@ -23,15 +20,35 @@ export function Sidebar() {
       </div>
 
       <div className="flex flex-col gap-0.5 flex-1 w-full px-2">
-        {navItems.map(({ icon: Icon, label, active }) => (
+        {/* Home → session view */}
+        <Tooltip content="Home">
+          <button onClick={() => onNavigate('session')}
+            className={`w-full h-9 rounded-lg flex items-center justify-center transition-colors
+              ${activeView === 'session' ? 'text-gray-500 hover:bg-[#1e2a3b] hover:text-gray-200' : 'text-gray-500 hover:bg-[#1e2a3b] hover:text-gray-200'}`}>
+            <Home size={16} strokeWidth={1.8} />
+          </button>
+        </Tooltip>
+
+        {/* Ad Account → account view (second icon, active when in account view) */}
+        <Tooltip content="Ad Account">
+          <button onClick={() => onNavigate('account')}
+            className={`w-full h-9 rounded-lg flex items-center justify-center transition-colors
+              ${activeView === 'account' ? 'bg-blue-600 text-white' : 'text-gray-500 hover:bg-[#1e2a3b] hover:text-gray-200'}`}>
+            <BarChart2 size={16} strokeWidth={activeView === 'account' ? 2.5 : 1.8} />
+          </button>
+        </Tooltip>
+
+        {/* Other nav items */}
+        {([
+          { icon: Layers, label: 'Brands' },
+          { icon: MapPin, label: 'Track' },
+          { icon: Film, label: 'Studio' },
+          { icon: Target, label: 'Angle', active: activeView === 'session' },
+        ] as Array<{ icon: React.ComponentType<{ size: number; strokeWidth: number }>; label: string; active?: boolean }>).map(({ icon: Icon, label, active }) => (
           <Tooltip key={label} content={label}>
-            <button
+            <button onClick={() => label === 'Angle' ? onNavigate('session') : undefined}
               className={`w-full h-9 rounded-lg flex items-center justify-center transition-colors
-                ${active
-                  ? 'bg-blue-600 text-white'
-                  : 'text-gray-500 hover:bg-[#1e2a3b] hover:text-gray-200'
-                }`}
-            >
+                ${active ? 'bg-blue-600 text-white' : 'text-gray-500 hover:bg-[#1e2a3b] hover:text-gray-200'}`}>
               <Icon size={16} strokeWidth={active ? 2.5 : 1.8} />
             </button>
           </Tooltip>
